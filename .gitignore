@@ -1,0 +1,4 @@
+.env
+.env.build.*
+
+/src/install-media/**/*.tar.gz

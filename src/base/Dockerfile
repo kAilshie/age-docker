@@ -1,5 +1,5 @@
 ARG BUILD_MODE="prod"
-ARG UBUNTU_VERSION_TAG="24.10"
+ARG UBUNTU_VERSION_TAG="22.04"
 
 # =================================================
 # base

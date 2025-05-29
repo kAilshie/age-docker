@@ -1,6 +1,7 @@
 #!/bin/bash
 
 POLLING_INTERVAL=5
+MIN_SITE_AVAILABLE_SUCCESSES=4
 
 get_server_token()
 {
@@ -47,13 +48,23 @@ function wait_until_server_site_is_available()
     wait_until_server_service_is_available ${host}
 
     echo "Checking if ArcGIS Server site for ($host) is up..."
-    local response=$(curl -k -s ${health_check_url})
+    local response
+    local success_count=0
+    local success=false
 
-    while [ "${response}" != "{\"success\":true}" ]; do
-        echo ${response}
-        echo "ArcGIS Server site for ($host) is not ready, waiting..."
-        sleep ${POLLING_INTERVAL}
+    while [ "${success_count}" -lt "${MIN_SITE_AVAILABLE_SUCCESSES}" ]; do
         response=$(curl -k -s ${health_check_url})
+        #echo ${response}
+
+        if [ "${response}" == "{\"success\":true}" ]; then
+            ((success_count++))
+            echo "ArcGIS Server site check for ($host) is successful, (${success_count}/${MIN_SITE_AVAILABLE_SUCCESSES}) consecutive successes."
+        else
+            success_count=0
+            echo "ArcGIS Server site for ($host) is not ready, waiting..."
+        fi
+        
+        sleep ${POLLING_INTERVAL}
     done
 
     echo "ArcGIS Server site for ($host) is up."
@@ -103,4 +114,19 @@ function is_server_federated()
     else
         echo false
     fi 
+}
+
+function get_server_web_adaptors()
+{
+    local host=$1
+    local username=$2
+    local password=$3
+
+    local referer="https://$host"
+    local token=$(get_server_token $host $referer $username $password)
+
+    local web_adaptors_url="https://$host:6443/arcgis/admin/system/webadaptors?token=$token&f=json"
+    local web_adaptors_response=$(curl -s -k -X GET $web_adaptors_url -H 'Referer: '$referer)
+
+    echo $web_adaptors_response
 }

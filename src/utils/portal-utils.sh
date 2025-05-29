@@ -1,14 +1,14 @@
 #!/bin/bash
 
 POLLING_INTERVAL=5
+MIN_SITE_AVAILABLE_SUCCESSES=4
 
 get_portal_token()
 {
     local portal_url=$1
     local referer=$2
     local username=$3
-    local password=$4
-    
+    local password=$4  
     
     local get_token_url="$portal_url/sharing/rest/generateToken"  
     local get_token_params="-d username=$username -d password=$password -d client=referer -d referer=$referer -d f=json"
@@ -46,14 +46,27 @@ function wait_until_portal_site_is_available()
     wait_until_portal_service_is_available ${portal_url}
 
     echo "Checking if Portal for ArcGIS site for ($portal_url) is up..."
-    local response=$(curl -k -s ${health_check_url})
+    #local response=$(curl -k -s ${health_check_url})
+    local response
+    local success_count=0
+    local success=false
 
-    while [ "${response}" != "{\"status\":\"success\"}" ]; do
-        echo ${response}
-        echo "Portal for ArcGIS site for ($portal_url) is not ready, waiting..."
-        sleep ${POLLING_INTERVAL}
+    while [ "${success_count}" -lt "${MIN_SITE_AVAILABLE_SUCCESSES}" ]; do
         response=$(curl -k -s ${health_check_url})
+        #echo ${response}
+
+        if [ "${response}" == "{\"status\":\"success\"}" ]; then
+            ((success_count++))
+            echo "Portal for ArcGIS site check for ($portal_url) is successful, (${success_count}/${MIN_SITE_AVAILABLE_SUCCESSES}) consecutive successes."
+        else
+            success_count=0
+            echo "Portal for ArcGIS site for ($portal_url) is not ready, waiting..."
+        fi
+        
+        sleep ${POLLING_INTERVAL}
     done
+
+    echo "Portal for ArcGIS site for ($portal_url) is up."
 }
 
 update_portal_system_properties()
@@ -137,4 +150,19 @@ function update_federated_server_role()
     
     echo $update_server_response
     echo ""
+}
+
+function get_portal_web_adaptors()
+{
+    local portal_url=$1
+    local username=$2
+    local password=$3
+
+    local referer="$portal_url"
+    local token=$(get_portal_token $portal_url $referer $username $password)
+
+    local web_adaptors_url="$portal_url/portaladmin/system/webadaptors?token=$token&f=json"
+    local web_adaptors_response=$(curl -s -k -X GET $web_adaptors_url -H 'Referer: '$referer)
+
+    echo $web_adaptors_response
 }

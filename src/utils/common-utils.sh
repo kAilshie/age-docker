@@ -1,6 +1,7 @@
 #!/bin/bash
 
 POLLING_INTERVAL=5
+MIN_SITE_AVAILABLE_SUCCESSES=4
 
 function wait_forever()
 {

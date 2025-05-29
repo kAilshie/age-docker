@@ -18,6 +18,7 @@ services:
       args:
         - BUILD_TAG=${BUILD_TAG}
         - ARCGIS_PATCH_STRATEGY=${ARCGIS_PATCH_STRATEGY}
+        - SERVER_POST_PATCH_STAGE=${SERVER_POST_PATCH_STAGE}
         - ARCHIVE_DIR=${ARCHIVE_DIR}
         - SERVER_ARCHIVE_FILE=${SERVER_ARCHIVE_FILE}
     depends_on:
@@ -31,6 +32,7 @@ services:
       args:
         - BUILD_TAG=${BUILD_TAG}
         - ARCGIS_PATCH_STRATEGY=${ARCGIS_PATCH_STRATEGY}
+        - SERVER_POST_PATCH_STAGE=${SERVER_POST_PATCH_STAGE}
         - ARCHIVE_DIR=${ARCHIVE_DIR}
         - GEOEVENT_ARCHIVE_FILE=${GEOEVENT_ARCHIVE_FILE}
     depends_on:
@@ -59,6 +61,20 @@ services:
         - ARCGIS_PATCH_STRATEGY=${ARCGIS_PATCH_STRATEGY}
         - ARCHIVE_DIR=${ARCHIVE_DIR}
         - PORTAL_ARCHIVE_FILE=${PORTAL_ARCHIVE_FILE}
+    depends_on:
+      - arcgis-base
+
+  web-adaptor:
+    image: "arcgis-web-adaptor:${BUILD_TAG}"
+    build:
+      context: .
+      dockerfile: ./web-adaptor/Dockerfile
+      args:
+        - BUILD_TAG=${BUILD_TAG}
+        - ARCGIS_VERSION=${ARCGIS_VERSION}
+        - ARCGIS_PATCH_STRATEGY=${ARCGIS_PATCH_STRATEGY}
+        - ARCHIVE_DIR=${ARCHIVE_DIR}
+        - WEB_ADAPTOR_ARCHIVE_FILE=${WEB_ADAPTOR_ARCHIVE_FILE}
     depends_on:
       - arcgis-base
 

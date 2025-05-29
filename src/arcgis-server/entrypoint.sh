@@ -127,18 +127,27 @@ function restart_server()
 
 main()
 {
-    apply_volume_mappings
+    if [ "$APPLY_VOLUME_MAPPING" == true ]; then
+        apply_volume_mappings
+    else
+        echo "APPLY_VOLUME_MAPPING env variable not set or is false, skipping volume mapping process."
+    fi
+    
     license_server
     
     start_server
     wait_until_server_service_is_available $(hostname -f)
     
-    create_site
+    if [ "$CREATE_SITE" == true ]; then
+        create_site
+    else
+        echo "CREATE_SITE env variable not set or is false, skipping create site process."
+    fi
 
     if [ "$FEDERATE_SERVER" == true ]; then
         federate_with_portal
     else
-        echo "Federate env variable not set, skipping federation process."
+        echo "FEDERATE_SERVER env variable not set or is false, skipping federation process."
     fi
 
     echo "ArcGIS Server is ready on host($(hostname -f))."
